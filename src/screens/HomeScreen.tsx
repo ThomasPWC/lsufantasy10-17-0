@@ -7,11 +7,10 @@ interface Props {
   onModeChange: (mode: Mode) => void
   best: BestRecord | null
   isSample: boolean
-  weeklyLine: number
   onStart: () => void
 }
 
-export default function HomeScreen({ mode, onModeChange, best, isSample, weeklyLine, onStart }: Props) {
+export default function HomeScreen({ mode, onModeChange, best, isSample, onStart }: Props) {
   const [showHow, setShowHow] = useState(false)
 
   return (
@@ -21,7 +20,7 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, weeklyL
           League <span className="text-turf">17-0</span>
         </h1>
         <p className="mt-2 text-center text-sm text-slate-400">
-          Draft from your league's history. Clear {weeklyLine} every week.
+          Draft from your league's history. Win every week.
         </p>
 
         {isSample && (
@@ -79,11 +78,11 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, weeklyL
           {showHow && (
             <ol className="pop-in mx-auto mt-3 max-w-sm list-decimal space-y-2 rounded-xl bg-field-soft p-4 pl-8 text-sm text-slate-300 ring-1 ring-slate-700">
               <li>Roll a random year and team from league history. Re-roll as much as you want.</li>
-              <li>Draft one player from that team's real roster into an open slot.</li>
+              <li>Draft one player from that team's real end-of-season roster into an open slot.</li>
               <li>Fill all 7 slots: QB, 2 RB, 2 WR, TE, FLEX. No drafting the same player twice.</li>
               <li>
-                Your lineup replays its seasons week by week. Score {weeklyLine}+ PPR in a week to
-                win it.
+                Your lineup replays its seasons week by week — clear the hidden weekly line to win
+                a week.
               </li>
               <li>
                 Go <span className="font-bold text-turf">17-0</span> to achieve perfection.

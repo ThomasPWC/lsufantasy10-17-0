@@ -102,9 +102,6 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
           {teamAvg.toFixed(1)}
           <span className="ml-1 text-base font-bold text-slate-500">/wk</span>
         </div>
-        <div className={`mt-0.5 text-xs font-semibold ${teamAvg >= weeklyLine ? 'text-turf' : 'text-rose-400'}`}>
-          line {weeklyLine}
-        </div>
       </div>
 
       <div className="mt-8">

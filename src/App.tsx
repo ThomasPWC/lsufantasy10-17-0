@@ -3,10 +3,11 @@ import { useLeagueData } from './hooks/useLeagueData'
 import { useRun } from './hooks/useRun'
 import { getBestRecord, getHardModePref, setHardModePref, type BestRecord } from './storage'
 import HomeScreen from './screens/HomeScreen'
-import RollScreen from './screens/RollScreen'
-import DraftScreen from './screens/DraftScreen'
+import PlayScreen from './screens/PlayScreen'
 import ResultScreen from './screens/ResultScreen'
-import { type DraftedPlayer, type Mode, type Screen } from './types'
+import { type DraftedPlayer, type Mode } from './types'
+
+type Screen = 'home' | 'play' | 'results'
 
 export default function App() {
   const index = useLeagueData()
@@ -21,16 +22,12 @@ export default function App() {
 
   const start = () => {
     run.newRun()
-    setScreen('roll')
+    setScreen('play')
   }
 
   const handleDrafted = () => {
     // run state updates on next render; complete when this was the 7th pick
-    if (run.filledCount + 1 === run.slots.length) {
-      setScreen('results')
-    } else {
-      setScreen('roll')
-    }
+    if (run.filledCount + 1 === run.slots.length) setScreen('results')
   }
 
   const goHome = () => {
@@ -46,15 +43,11 @@ export default function App() {
           onModeChange={setMode}
           best={best}
           isSample={index.data.sample === true}
-          weeklyLine={index.weeklyLine}
           onStart={start}
         />
       )}
-      {screen === 'roll' && (
-        <RollScreen run={run} mode={mode} onDraft={() => setScreen('draft')} onQuit={goHome} />
-      )}
-      {screen === 'draft' && (
-        <DraftScreen run={run} mode={mode} onBack={() => setScreen('roll')} onDrafted={handleDrafted} />
+      {screen === 'play' && (
+        <PlayScreen index={index} run={run} mode={mode} onDrafted={handleDrafted} onQuit={goHome} />
       )}
       {screen === 'results' && (
         <ResultScreen
