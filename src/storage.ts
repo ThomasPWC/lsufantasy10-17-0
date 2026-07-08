@@ -1,29 +1,29 @@
 import type { Mode } from './types'
 
-export interface BestRecord {
-  wins: number
-  losses: number
+export interface BestResult {
+  avg: number
+  perfect: boolean
   mode: Mode
   date: string
 }
 
-const BEST_KEY = 'league170.bestRecord'
+const BEST_KEY = 'league170.bestResult'
 const MODE_KEY = 'league170.hardMode'
 
-export function getBestRecord(): BestRecord | null {
+export function getBestResult(): BestResult | null {
   try {
     const raw = localStorage.getItem(BEST_KEY)
-    return raw ? (JSON.parse(raw) as BestRecord) : null
+    return raw ? (JSON.parse(raw) as BestResult) : null
   } catch {
     return null
   }
 }
 
-export function saveBestRecordIfBetter(record: BestRecord): boolean {
-  const best = getBestRecord()
-  if (best && best.wins >= record.wins) return false
+export function saveBestResultIfBetter(result: BestResult): boolean {
+  const best = getBestResult()
+  if (best && best.avg >= result.avg) return false
   try {
-    localStorage.setItem(BEST_KEY, JSON.stringify(record))
+    localStorage.setItem(BEST_KEY, JSON.stringify(result))
   } catch {
     /* storage unavailable */
   }

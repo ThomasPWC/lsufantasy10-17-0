@@ -1,27 +1,19 @@
 import { useMemo } from 'react'
 import { WEEKS, type DraftedPlayer } from '../types'
 
-export interface WeekResult {
-  week: number
-  score: number
-  win: boolean
-}
-
 export interface RecordResult {
-  weeks: WeekResult[]
+  avg: number
   wins: number
   losses: number
   perfect: boolean
 }
 
+// The game works off averages: your lineup's combined points per week
+// (season totals / 17) must clear the line — do that and you're 17-0.
 export function computeRecord(lineup: DraftedPlayer[], weeklyLine: number): RecordResult {
-  const weeks: WeekResult[] = []
-  for (let w = 0; w < WEEKS; w++) {
-    const score = lineup.reduce((sum, d) => sum + (d.player.weekly_ppr[w] ?? 0), 0)
-    weeks.push({ week: w + 1, score, win: score >= weeklyLine })
-  }
-  const wins = weeks.filter((x) => x.win).length
-  return { weeks, wins, losses: WEEKS - wins, perfect: wins === WEEKS }
+  const avg = lineup.reduce((sum, d) => sum + d.player.total_ppr, 0) / WEEKS
+  const perfect = avg >= weeklyLine
+  return { avg, wins: perfect ? 17 : 0, losses: perfect ? 0 : 17, perfect }
 }
 
 export function useRecord(lineup: DraftedPlayer[], weeklyLine: number): RecordResult {

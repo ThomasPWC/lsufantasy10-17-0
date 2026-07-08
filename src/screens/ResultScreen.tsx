@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRecord } from '../hooks/useRecord'
-import { saveBestRecordIfBetter } from '../storage'
+import { saveBestResultIfBetter } from '../storage'
 import { SLOT_DEFS, WEEKS, type DraftedPlayer, type Mode } from '../types'
 
 interface Props {
@@ -44,19 +44,19 @@ function Confetti() {
 
 export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, onHome }: Props) {
   const record = useRecord(lineup, weeklyLine)
-  const teamAvg = lineup.reduce((s, d) => s + d.player.total_ppr, 0) / WEEKS
+  const teamAvg = record.avg
   const [isNewBest, setIsNewBest] = useState(false)
 
   useEffect(() => {
     setIsNewBest(
-      saveBestRecordIfBetter({
-        wins: record.wins,
-        losses: record.losses,
+      saveBestResultIfBetter({
+        avg: Math.round(record.avg * 10) / 10,
+        perfect: record.perfect,
         mode,
         date: new Date().toISOString(),
       }),
     )
-  }, [record.wins, record.losses, mode])
+  }, [record.avg, record.perfect, mode])
 
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-8 pt-10">
@@ -77,16 +77,16 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
           <div className="mt-2 text-xl font-black text-turf">🏆 PERFECT SEASON 🏆</div>
         ) : (
           <div className="mt-2 text-sm text-slate-400">
-            {record.wins >= 13
-              ? 'So close to perfection.'
-              : record.wins >= 9
-                ? 'Playoff team. Not a legend.'
-                : 'Rough season, coach.'}
+            {weeklyLine - record.avg <= 5
+              ? 'Agonizingly close.'
+              : weeklyLine - record.avg <= 15
+                ? 'Solid squad. Not a legend.'
+                : 'Rough draft, coach.'}
           </div>
         )}
         {isNewBest && !record.perfect && (
           <div className="mt-2 inline-block rounded-full bg-flag/20 px-3 py-1 text-xs font-bold text-flag">
-            New personal best!
+            New best average!
           </div>
         )}
         {mode === 'hard' && (

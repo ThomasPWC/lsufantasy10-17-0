@@ -1,9 +1,10 @@
-// 1. Finds the best feasible lineup: the 7-starter combination (QB, 2 RB, 2 WR,
-//    TE, FLEX; dedupe by player_id) that maximizes the WORST week's total —
-//    i.e. the highest line at which 17-0 is still possible.
-// 2. Monte-Carlo simulates a strong player (per pick: look at N random
-//    team-season rolls, draft the highest-season-total eligible player) and
-//    reports the line where P(17-0) hits a target (default 2%).
+// The game works off AVERAGES: a lineup goes 17-0 if its combined points per
+// week (sum of season totals / 17) clears the line.
+//
+// 1. Prints the best possible lineup (max average) — the hard ceiling.
+// 2. Monte-Carlo simulates a strong player under the real mechanics (2 re-rolls
+//    per RUN; a re-roll replaces the rolled team) and reports the line where
+//    P(17-0) hits a target (default 2%).
 //
 // Usage: node scripts/tune-line.mjs [targetProbability] [--write]
 //        --write updates weekly_line in src/data/league-history.json
@@ -44,98 +45,53 @@ const byPos = {}
 for (const pos of ['QB', 'RB', 'WR', 'TE']) {
   byPos[pos] = pool.filter((p) => p.position === pos).sort((a, b) => b.total_ppr - a.total_ppr)
 }
-const CAND = {
-  QB: byPos.QB.slice(0, 40),
-  RB: byPos.RB.slice(0, 120),
-  WR: byPos.WR.slice(0, 120),
-  TE: byPos.TE.slice(0, 60),
-}
 
-const minWeek = (lineup) => {
-  let min = Infinity
-  for (let w = 0; w < WEEKS; w++) {
-    let sum = 0
-    for (const p of lineup) sum += p.weekly_ppr[w] ?? 0
-    if (sum < min) min = sum
-  }
-  return min
+// ---- 1. best possible average (greedy max-sum is optimal for this structure)
+const used = new Set()
+const take = (arr) => {
+  const p = arr.find((x) => !used.has(x.player_id))
+  used.add(p.player_id)
+  return p
 }
-const sumTotal = (lineup) => lineup.reduce((s, p) => s + p.total_ppr, 0)
+const bestLineup = [
+  ['QB', take(byPos.QB)],
+  ['RB', take(byPos.RB)],
+  ['RB', take(byPos.RB)],
+  ['WR', take(byPos.WR)],
+  ['WR', take(byPos.WR)],
+  ['TE', take(byPos.TE)],
+]
+const flexPool = [...byPos.RB, ...byPos.WR, ...byPos.TE]
+  .filter((p) => !used.has(p.player_id))
+  .sort((a, b) => b.total_ppr - a.total_ppr)
+bestLineup.push(['FLEX', flexPool[0]])
+const maxAvg =
+  bestLineup.reduce((s, [, p]) => s + p.total_ppr, 0) / WEEKS
 
-// ---- 1. maximin lineup via steepest-ascent hill climb with random restarts
+console.log('=== Best possible lineup (max average) ===')
+for (const [slot, p] of bestLineup) {
+  console.log(
+    `${slot.padEnd(4)} ${p.name.padEnd(24)} ${String(p.year)}  ${(p.total_ppr / WEEKS).toFixed(1).padStart(5)} /wk  (${p.team})`,
+  )
+}
+console.log(`max average: ${maxAvg.toFixed(1)} /wk -> 17-0 is impossible above this line`)
+
+// ---- 2. simulate strong play with a PER-RUN budget of 2 re-rolls total
+// (1 Year + 1 Team). A re-roll REPLACES the rolled team. Strong play: burn a
+// re-roll when the best available player is weak. Rolls that land on a team
+// with nothing draftable are free.
 let rngState = 20260708
 const rand = () => {
   rngState = (rngState * 1103515245 + 12345) & 0x7fffffff
   return rngState / 0x7fffffff
 }
-let best = null
-for (let restart = 0; restart < 400; restart++) {
-  // random init from candidates, respecting dedupe
-  const used = new Set()
-  const lineup = SLOTS.map((slot) => {
-    for (;;) {
-      const pos = slot.elig[Math.floor(rand() * slot.elig.length)]
-      const p = CAND[pos][Math.floor(rand() * Math.min(CAND[pos].length, 60))]
-      if (!used.has(p.player_id)) {
-        used.add(p.player_id)
-        return p
-      }
-    }
-  })
-  let improved = true
-  while (improved) {
-    improved = false
-    const curMin = minWeek(lineup)
-    const curSum = sumTotal(lineup)
-    for (let i = 0; i < SLOTS.length; i++) {
-      let bestSwap = null
-      for (const pos of SLOTS[i].elig) {
-        for (const cand of CAND[pos]) {
-          if (lineup.some((p, j) => j !== i && p.player_id === cand.player_id)) continue
-          if (cand.player_id === lineup[i].player_id) continue
-          const trial = lineup.slice()
-          trial[i] = cand
-          const m = minWeek(trial)
-          const s = sumTotal(trial)
-          const [bm, bs] = bestSwap ? bestSwap : [curMin, curSum]
-          if (m > bm || (m === bm && s > bs)) bestSwap = [m, s, cand]
-        }
-      }
-      if (bestSwap && (bestSwap[0] > curMin || (bestSwap[0] === curMin && bestSwap[1] > sumTotal(lineup)))) {
-        lineup[i] = bestSwap[2]
-        improved = true
-      }
-    }
-  }
-  const m = minWeek(lineup)
-  if (!best || m > best.min || (m === best.min && sumTotal(lineup) > sumTotal(best.lineup))) {
-    best = { min: m, lineup: lineup.slice() }
-  }
-}
-
-console.log('=== Best feasible lineup (maximizes the worst week) ===')
-best.lineup.forEach((p, i) =>
-  console.log(
-    `${SLOTS[i].label.padEnd(4)} ${p.name.padEnd(24)} ${String(p.year)}  ${p.total_ppr.toFixed(1).padStart(6)} total  (${p.team})`,
-  ),
-)
-const weekly = Array.from({ length: WEEKS }, (_, w) =>
-  best.lineup.reduce((s, p) => s + (p.weekly_ppr[w] ?? 0), 0),
-)
-console.log('weekly:', weekly.map((x) => x.toFixed(0)).join(' '))
-console.log(`worst week: ${best.min.toFixed(1)}  -> 17-0 is impossible above this line`)
-
-// ---- 2. simulate strong play with a PER-RUN budget of 2 re-rolls total
-// (1 Year + 1 Team). A re-roll REPLACES the rolled team — you draft from
-// whatever you land on. Strong play: burn a re-roll when the best available
-// player is weak. Rolls that land on a team with nothing draftable are free.
 const RUN_BUDGET = 2
 const REROLL_CUTOFF = 240 // re-roll if the best available season total is below this
 const SIMS = 20000
-const mins = []
+const avgs = []
 for (let sim = 0; sim < SIMS; sim++) {
   const slots = Array(SLOTS.length).fill(null)
-  const used = new Set()
+  const usedIds = new Set()
   let budget = RUN_BUDGET
   for (let pick = 0; pick < SLOTS.length; pick++) {
     const look = () => {
@@ -143,7 +99,7 @@ for (let sim = 0; sim < SIMS; sim++) {
       let bestP = null
       let bestSlot = -1
       for (const p of roster) {
-        if (used.has(p.player_id)) continue
+        if (usedIds.has(p.player_id)) continue
         let slotIdx = -1
         for (let i = 0; i < SLOTS.length; i++) {
           if (slots[i] === null && SLOTS[i].elig.includes(p.position)) {
@@ -167,17 +123,18 @@ for (let sim = 0; sim < SIMS; sim++) {
       while (!cur.bestP) cur = look()
     }
     slots[cur.bestSlot] = cur.bestP
-    used.add(cur.bestP.player_id)
+    usedIds.add(cur.bestP.player_id)
   }
-  mins.push(minWeek(slots))
+  avgs.push(slots.reduce((s, p) => s + p.total_ppr, 0) / WEEKS)
 }
-mins.sort((a, b) => a - b)
-const q = (p) => mins[Math.min(mins.length - 1, Math.floor(p * mins.length))]
+avgs.sort((a, b) => a - b)
+const q = (p) => avgs[Math.min(avgs.length - 1, Math.floor(p * avgs.length))]
 console.log(`\n=== Strong-play simulation (${SIMS} runs, ${RUN_BUDGET} re-rolls/run, cutoff ${REROLL_CUTOFF}) ===`)
-console.log(`median worst-week: ${q(0.5).toFixed(1)} | p90: ${q(0.9).toFixed(1)} | p98: ${q(0.98).toFixed(1)} | p99: ${q(0.99).toFixed(1)}`)
-const pAt = (l) => mins.filter((m) => m >= l).length / mins.length
-let line = Math.floor(best.min)
-for (let l = Math.floor(q(0.5)); l <= Math.floor(best.min); l++) {
+console.log(`median avg: ${q(0.5).toFixed(1)} | p90: ${q(0.9).toFixed(1)} | p98: ${q(0.98).toFixed(1)} | p99: ${q(0.99).toFixed(1)}`)
+
+const pAt = (l) => avgs.filter((a) => a >= l).length / avgs.length
+let line = Math.floor(maxAvg)
+for (let l = Math.floor(q(0.5)); l <= Math.floor(maxAvg); l++) {
   if (Math.abs(pAt(l) - TARGET) < Math.abs(pAt(line) - TARGET)) line = l
 }
 for (let l = line - 2; l <= line + 2; l++) console.log(`  line ${l}: P(17-0) = ${(pAt(l) * 100).toFixed(2)}%`)

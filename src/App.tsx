@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLeagueData } from './hooks/useLeagueData'
 import { useRun } from './hooks/useRun'
-import { getBestRecord, getHardModePref, setHardModePref, type BestRecord } from './storage'
+import { getBestResult, getHardModePref, setHardModePref, type BestResult } from './storage'
 import HomeScreen from './screens/HomeScreen'
 import PlayScreen from './screens/PlayScreen'
 import ResultScreen from './screens/ResultScreen'
@@ -14,7 +14,7 @@ export default function App() {
   const run = useRun(index)
   const [screen, setScreen] = useState<Screen>('home')
   const [mode, setMode] = useState<Mode>(() => (getHardModePref() ? 'hard' : 'normal'))
-  const [best, setBest] = useState<BestRecord | null>(() => getBestRecord())
+  const [best, setBest] = useState<BestResult | null>(() => getBestResult())
 
   useEffect(() => {
     setHardModePref(mode === 'hard')
@@ -31,7 +31,7 @@ export default function App() {
   }
 
   const goHome = () => {
-    setBest(getBestRecord())
+    setBest(getBestResult())
     setScreen('home')
   }
 
