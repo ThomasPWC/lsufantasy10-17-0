@@ -92,6 +92,7 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
     : []
 
   const sorted = [...run.eligiblePlayers].sort((a, b) => b.total_ppr - a.total_ppr)
+  const stuck = !spinning && sorted.length === 0 // free re-roll when nothing is draftable
 
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-6 pt-6">
@@ -108,17 +109,23 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
         <div className="flex shrink-0 gap-2">
           <button
             onClick={run.rollYear}
-            disabled={spinning}
-            className="min-h-11 rounded-xl bg-field-soft px-3 text-sm font-bold text-slate-200 ring-1 ring-slate-600 transition active:scale-[0.96] disabled:opacity-50"
+            disabled={spinning || (run.yearRerollsLeft <= 0 && !stuck)}
+            className="min-h-11 rounded-xl bg-field-soft px-3 text-sm font-bold text-slate-200 ring-1 ring-slate-600 transition active:scale-[0.96] disabled:opacity-40"
           >
-            🎲 Year
+            🎲 Year{' '}
+            <span className="text-xs font-normal text-slate-500">
+              ×{stuck ? '∞' : run.yearRerollsLeft}
+            </span>
           </button>
           <button
             onClick={run.rollTeam}
-            disabled={spinning}
-            className="min-h-11 rounded-xl bg-field-soft px-3 text-sm font-bold text-slate-200 ring-1 ring-slate-600 transition active:scale-[0.96] disabled:opacity-50"
+            disabled={spinning || (run.teamRerollsLeft <= 0 && !stuck)}
+            className="min-h-11 rounded-xl bg-field-soft px-3 text-sm font-bold text-slate-200 ring-1 ring-slate-600 transition active:scale-[0.96] disabled:opacity-40"
           >
-            🎲 Team
+            🎲 Team{' '}
+            <span className="text-xs font-normal text-slate-500">
+              ×{stuck ? '∞' : run.teamRerollsLeft}
+            </span>
           </button>
         </div>
       </div>
@@ -139,7 +146,8 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
           <div className="text-xs text-slate-400">{shown.owner}</div>
         </div>
         <div className="mt-1.5 text-[10px] text-slate-600">
-          🎲 Year = same owner, new season · 🎲 Team = same season, new team
+          🎲 Year = same owner, new season · 🎲 Team = same season, new team · one of each per
+          pick
         </div>
       </div>
 

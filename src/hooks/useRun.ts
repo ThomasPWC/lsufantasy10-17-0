@@ -20,6 +20,8 @@ export interface Run {
   year: number
   team: Team | undefined
   rollKind: RollKind
+  yearRerollsLeft: number
+  teamRerollsLeft: number
   complete: boolean
   filledCount: number
   eligiblePlayers: Player[]
@@ -30,6 +32,8 @@ export interface Run {
   newRun: () => void
 }
 
+export const REROLLS_PER_PICK = 1
+
 export function useRun(index: LeagueIndex): Run {
   const rollRandom = useCallback((): { year: number; teamId: number; kind: RollKind } => {
     const year = randomOf(index.years)
@@ -39,6 +43,7 @@ export function useRun(index: LeagueIndex): Run {
 
   const [slots, setSlots] = useState<(DraftedPlayer | null)[]>(() => SLOT_DEFS.map(() => null))
   const [roll, setRoll] = useState(rollRandom)
+  const [rerolls, setRerolls] = useState({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
 
   const team = getTeam(index, roll.year, roll.teamId)
 
@@ -63,9 +68,17 @@ export function useRun(index: LeagueIndex): Run {
     )
   }, [team, draftedIds, openSlotIndicesFor])
 
+  // A re-roll is free when the current team has no draftable player for the
+  // remaining slots — otherwise the pick could soft-lock with no budget left.
+  const stuck = eligiblePlayers.length === 0
+
   // Re-roll YEAR: follow the same owner to a different season they played in.
   // Falls back to a fresh year+team roll for single-season owners.
   const rollYear = useCallback(() => {
+    if (!stuck) {
+      if (rerolls.year <= 0) return
+      setRerolls((r) => ({ ...r, year: r.year - 1 }))
+    }
     setRoll((prev) => {
       const owner = index.seasonsByYear
         .get(prev.year)!
@@ -84,10 +97,14 @@ export function useRun(index: LeagueIndex): Run {
       const season = index.seasonsByYear.get(year)!
       return { year, teamId: randomOf(season.teams).team_id, kind: 'both' as const }
     })
-  }, [index])
+  }, [index, stuck, rerolls.year])
 
   // Re-roll TEAM: same season, different team.
   const rollTeam = useCallback(() => {
+    if (!stuck) {
+      if (rerolls.team <= 0) return
+      setRerolls((r) => ({ ...r, team: r.team - 1 }))
+    }
     setRoll((prev) => {
       const season = index.seasonsByYear.get(prev.year)!
       const teamId = randomOtherThan(
@@ -96,7 +113,7 @@ export function useRun(index: LeagueIndex): Run {
       )
       return { ...prev, teamId, kind: 'team' as const }
     })
-  }, [index])
+  }, [index, stuck, rerolls.team])
 
   const draft = useCallback(
     (player: Player, slotIndex: number) => {
@@ -109,6 +126,7 @@ export function useRun(index: LeagueIndex): Run {
         owner: team.owner,
       }
       setSlots(next)
+      setRerolls({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
       if (next.some((s) => s === null)) setRoll(rollRandom())
     },
     [team, slots, roll.year, rollRandom],
@@ -116,6 +134,7 @@ export function useRun(index: LeagueIndex): Run {
 
   const newRun = useCallback(() => {
     setSlots(SLOT_DEFS.map(() => null))
+    setRerolls({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
     setRoll(rollRandom())
   }, [rollRandom])
 
@@ -126,6 +145,8 @@ export function useRun(index: LeagueIndex): Run {
     year: roll.year,
     team,
     rollKind: roll.kind,
+    yearRerollsLeft: rerolls.year,
+    teamRerollsLeft: rerolls.team,
     complete: filledCount === SLOT_DEFS.length,
     filledCount,
     eligiblePlayers,

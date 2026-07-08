@@ -126,7 +126,8 @@ console.log('weekly:', weekly.map((x) => x.toFixed(0)).join(' '))
 console.log(`worst week: ${best.min.toFixed(1)}  -> 17-0 is impossible above this line`)
 
 // ---- 2. simulate strong play: ROLLS looks per pick, greedy by season total
-const ROLLS = 25
+// With 1 Year + 1 Team re-roll per pick, a player sees at most 3 rosters.
+const ROLLS = 3
 const SIMS = 20000
 const mins = []
 for (let sim = 0; sim < SIMS; sim++) {
