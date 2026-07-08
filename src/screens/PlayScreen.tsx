@@ -147,7 +147,7 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
         </div>
         <div className="mt-1.5 text-[10px] text-slate-600">
           🎲 Year = same owner, new season · 🎲 Team = same season, new team · one of each per
-          pick
+          run
         </div>
       </div>
 

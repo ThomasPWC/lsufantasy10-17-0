@@ -125,19 +125,23 @@ const weekly = Array.from({ length: WEEKS }, (_, w) =>
 console.log('weekly:', weekly.map((x) => x.toFixed(0)).join(' '))
 console.log(`worst week: ${best.min.toFixed(1)}  -> 17-0 is impossible above this line`)
 
-// ---- 2. simulate strong play: ROLLS looks per pick, greedy by season total
-// With 1 Year + 1 Team re-roll per pick, a player sees at most 3 rosters.
-const ROLLS = 3
+// ---- 2. simulate strong play with a PER-RUN budget of 2 re-rolls total
+// (1 Year + 1 Team). A re-roll REPLACES the rolled team — you draft from
+// whatever you land on. Strong play: burn a re-roll when the best available
+// player is weak. Rolls that land on a team with nothing draftable are free.
+const RUN_BUDGET = 2
+const REROLL_CUTOFF = 240 // re-roll if the best available season total is below this
 const SIMS = 20000
 const mins = []
 for (let sim = 0; sim < SIMS; sim++) {
   const slots = Array(SLOTS.length).fill(null)
   const used = new Set()
+  let budget = RUN_BUDGET
   for (let pick = 0; pick < SLOTS.length; pick++) {
-    let bestP = null
-    let bestSlot = -1
-    for (let r = 0; r < ROLLS; r++) {
+    const look = () => {
       const roster = teamSeasons[Math.floor(rand() * teamSeasons.length)]
+      let bestP = null
+      let bestSlot = -1
       for (const p of roster) {
         if (used.has(p.player_id)) continue
         let slotIdx = -1
@@ -153,15 +157,23 @@ for (let sim = 0; sim < SIMS; sim++) {
           bestSlot = slotIdx
         }
       }
+      return { bestP, bestSlot }
     }
-    slots[bestSlot] = bestP
-    used.add(bestP.player_id)
+    let cur = look()
+    while (!cur.bestP) cur = look() // free re-roll when nothing is draftable
+    while (budget > 0 && cur.bestP.total_ppr < REROLL_CUTOFF) {
+      budget--
+      cur = look()
+      while (!cur.bestP) cur = look()
+    }
+    slots[cur.bestSlot] = cur.bestP
+    used.add(cur.bestP.player_id)
   }
   mins.push(minWeek(slots))
 }
 mins.sort((a, b) => a - b)
 const q = (p) => mins[Math.min(mins.length - 1, Math.floor(p * mins.length))]
-console.log(`\n=== Strong-play simulation (${SIMS} runs, ${ROLLS} rolls/pick, greedy by total) ===`)
+console.log(`\n=== Strong-play simulation (${SIMS} runs, ${RUN_BUDGET} re-rolls/run, cutoff ${REROLL_CUTOFF}) ===`)
 console.log(`median worst-week: ${q(0.5).toFixed(1)} | p90: ${q(0.9).toFixed(1)} | p98: ${q(0.98).toFixed(1)} | p99: ${q(0.99).toFixed(1)}`)
 const pAt = (l) => mins.filter((m) => m >= l).length / mins.length
 let line = Math.floor(best.min)

@@ -79,8 +79,8 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, onStart
           {showHow && (
             <ol className="pop-in mx-auto mt-3 max-w-sm list-decimal space-y-2 rounded-xl bg-field-soft p-4 pl-8 text-sm text-slate-300 ring-1 ring-slate-700">
               <li>
-                Roll a random year and team from league history. Each pick you get one Year
-                re-roll and one Team re-roll — spend them wisely.
+                Roll a random year and team from league history. You get one Year re-roll and
+                one Team re-roll for the entire draft — spend them wisely.
               </li>
               <li>Draft one player from that team's real end-of-season roster into an open slot.</li>
               <li>Fill all 7 slots: QB, 2 RB, 2 WR, TE, FLEX. No drafting the same player twice.</li>

@@ -32,7 +32,7 @@ export interface Run {
   newRun: () => void
 }
 
-export const REROLLS_PER_PICK = 1
+export const REROLLS_PER_RUN = 1 // one Year + one Team re-roll for the whole draft
 
 export function useRun(index: LeagueIndex): Run {
   const rollRandom = useCallback((): { year: number; teamId: number; kind: RollKind } => {
@@ -43,7 +43,7 @@ export function useRun(index: LeagueIndex): Run {
 
   const [slots, setSlots] = useState<(DraftedPlayer | null)[]>(() => SLOT_DEFS.map(() => null))
   const [roll, setRoll] = useState(rollRandom)
-  const [rerolls, setRerolls] = useState({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
+  const [rerolls, setRerolls] = useState({ year: REROLLS_PER_RUN, team: REROLLS_PER_RUN })
 
   const team = getTeam(index, roll.year, roll.teamId)
 
@@ -126,7 +126,6 @@ export function useRun(index: LeagueIndex): Run {
         owner: team.owner,
       }
       setSlots(next)
-      setRerolls({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
       if (next.some((s) => s === null)) setRoll(rollRandom())
     },
     [team, slots, roll.year, rollRandom],
@@ -134,7 +133,7 @@ export function useRun(index: LeagueIndex): Run {
 
   const newRun = useCallback(() => {
     setSlots(SLOT_DEFS.map(() => null))
-    setRerolls({ year: REROLLS_PER_PICK, team: REROLLS_PER_PICK })
+    setRerolls({ year: REROLLS_PER_RUN, team: REROLLS_PER_RUN })
     setRoll(rollRandom())
   }, [rollRandom])
 
