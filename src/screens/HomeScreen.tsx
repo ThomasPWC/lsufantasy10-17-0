@@ -16,8 +16,9 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, onStart
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-8 pt-14">
       <div className="flex-1">
-        <h1 className="text-center text-5xl font-black tracking-tight text-slate-100">
-          League <span className="text-turf">17-0</span>
+        <h1 className="text-center font-black tracking-tight text-slate-100">
+          <span className="block text-3xl">LSUFANTASY10</span>
+          <span className="block text-6xl text-turf">17-0</span>
         </h1>
         <p className="mt-2 text-center text-sm text-slate-400">
           Draft from your league's history. Win every week.

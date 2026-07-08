@@ -1,4 +1,4 @@
-# League 17-0
+# LSUFANTASY10 17-0
 
 A mobile-first web game modeled on Sleeper's 17-0, but the player pool comes from my ESPN
 fantasy league's history (league 390467). Roll a random team-season, draft a player from

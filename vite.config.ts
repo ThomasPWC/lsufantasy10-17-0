@@ -3,14 +3,16 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages serves the app from /<repo>/; dev stays at root
+  base: command === 'build' ? '/lsufantasy10-17-0/' : '/',
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'League 17-0',
+        name: 'LSUFANTASY10 17-0',
         short_name: '17-0',
         description: 'Draft a lineup from your league history and try to go 17-0.',
         theme_color: '#0f172a',
@@ -24,4 +26,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))
