@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-field: #0f172a;
+  --color-field-soft: #1e293b;
+  --color-turf: #34d399;
+  --color-turf-deep: #059669;
+  --color-flag: #fb923c;
+}
+
+html,
+body {
+  background-color: var(--color-field);
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.18s ease-out both;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(720deg);
+    opacity: 0.6;
+  }
+}
+
+.confetti {
+  position: fixed;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  pointer-events: none;
+  animation: confetti-fall linear both infinite;
+  z-index: 50;
+}
