@@ -39,11 +39,7 @@ export default function DraftScreen({ run, mode, onBack, onDrafted }: Props) {
     ? [...new Map(run.openSlotIndicesFor(choosing).map((i) => [SLOT_DEFS[i].label, i])).entries()]
     : []
 
-  const sorted = [...run.eligiblePlayers].sort(
-    (a, b) =>
-      ['QB', 'RB', 'WR', 'TE'].indexOf(a.position) - ['QB', 'RB', 'WR', 'TE'].indexOf(b.position) ||
-      b.total_ppr - a.total_ppr,
-  )
+  const sorted = [...run.eligiblePlayers].sort((a, b) => b.total_ppr - a.total_ppr)
 
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-6 pt-6">

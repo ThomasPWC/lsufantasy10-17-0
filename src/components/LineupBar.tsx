@@ -1,4 +1,4 @@
-import { SLOT_DEFS, type DraftedPlayer, type Mode } from '../types'
+import { SLOT_DEFS, WEEKS, type DraftedPlayer, type Mode } from '../types'
 
 function shortName(full: string): string {
   const parts = full.split(' ')
@@ -32,7 +32,9 @@ export default function LineupBar({ slots, mode }: Props) {
                 <div className="text-slate-400">
                   '{String(filled.year).slice(2)}
                   {mode === 'normal' && (
-                    <span className="ml-0.5 text-turf">{Math.round(filled.player.total_ppr)}</span>
+                    <span className="ml-0.5 text-turf">
+                      {(filled.player.total_ppr / WEEKS).toFixed(1)}
+                    </span>
                   )}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import type { Mode, Player } from '../types'
+import { WEEKS, type Mode, type Player } from '../types'
 
 const POS_COLORS: Record<string, string> = {
   QB: 'bg-rose-500/20 text-rose-300',
@@ -27,8 +27,8 @@ export default function PlayerCard({ player, mode, onTap }: Props) {
       <span className="flex-1 truncate font-semibold text-slate-100">{player.name}</span>
       {mode === 'normal' ? (
         <span className="shrink-0 text-sm font-bold text-turf">
-          {player.total_ppr.toFixed(1)}
-          <span className="ml-1 font-normal text-slate-500">pts</span>
+          {(player.total_ppr / WEEKS).toFixed(1)}
+          <span className="ml-1 font-normal text-slate-500">/wk</span>
         </span>
       ) : (
         <span className="shrink-0 text-sm text-slate-600">???</span>
