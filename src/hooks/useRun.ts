@@ -13,10 +13,13 @@ function randomOtherThan<T>(arr: T[], avoid: T): T {
   return randomOf(rest)
 }
 
+export type RollKind = 'both' | 'year' | 'team'
+
 export interface Run {
   slots: (DraftedPlayer | null)[]
   year: number
   team: Team | undefined
+  rollKind: RollKind
   complete: boolean
   filledCount: number
   eligiblePlayers: Player[]
@@ -28,10 +31,10 @@ export interface Run {
 }
 
 export function useRun(index: LeagueIndex): Run {
-  const rollRandom = useCallback(() => {
+  const rollRandom = useCallback((): { year: number; teamId: number; kind: RollKind } => {
     const year = randomOf(index.years)
     const season = index.seasonsByYear.get(year)!
-    return { year, teamId: randomOf(season.teams).team_id }
+    return { year, teamId: randomOf(season.teams).team_id, kind: 'both' }
   }, [index])
 
   const [slots, setSlots] = useState<(DraftedPlayer | null)[]>(() => SLOT_DEFS.map(() => null))
@@ -60,14 +63,30 @@ export function useRun(index: LeagueIndex): Run {
     )
   }, [team, draftedIds, openSlotIndicesFor])
 
+  // Re-roll YEAR: follow the same owner to a different season they played in.
+  // Falls back to a fresh year+team roll for single-season owners.
   const rollYear = useCallback(() => {
     setRoll((prev) => {
+      const owner = index.seasonsByYear
+        .get(prev.year)!
+        .teams.find((t) => t.team_id === prev.teamId)?.owner
+      const otherYears = index.years.filter(
+        (y) =>
+          y !== prev.year && index.seasonsByYear.get(y)!.teams.some((t) => t.owner === owner),
+      )
+      if (owner && otherYears.length > 0) {
+        const year = randomOf(otherYears)
+        const teamId = index.seasonsByYear.get(year)!.teams.find((t) => t.owner === owner)!
+          .team_id
+        return { year, teamId, kind: 'year' as const }
+      }
       const year = randomOtherThan(index.years, prev.year)
       const season = index.seasonsByYear.get(year)!
-      return { year, teamId: randomOf(season.teams).team_id }
+      return { year, teamId: randomOf(season.teams).team_id, kind: 'both' as const }
     })
   }, [index])
 
+  // Re-roll TEAM: same season, different team.
   const rollTeam = useCallback(() => {
     setRoll((prev) => {
       const season = index.seasonsByYear.get(prev.year)!
@@ -75,7 +94,7 @@ export function useRun(index: LeagueIndex): Run {
         season.teams.map((t) => t.team_id),
         prev.teamId,
       )
-      return { ...prev, teamId }
+      return { ...prev, teamId, kind: 'team' as const }
     })
   }, [index])
 
@@ -106,6 +125,7 @@ export function useRun(index: LeagueIndex): Run {
     slots,
     year: roll.year,
     team,
+    rollKind: roll.kind,
     complete: filledCount === SLOT_DEFS.length,
     filledCount,
     eligiblePlayers,

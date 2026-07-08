@@ -21,18 +21,38 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
   const [spinning, setSpinning] = useState(true)
   const [flash, setFlash] = useState<{ year: number; name: string; owner: string } | null>(null)
 
-  // re-spin whenever the rolled team changes (re-rolls and post-pick auto-rolls)
+  // re-spin whenever the rolled team changes (re-rolls and post-pick auto-rolls);
+  // only the dimension that was re-rolled cycles during the animation
   const spinKey = `${run.year}-${run.team?.team_id}-${run.filledCount}`
   useEffect(() => {
     setSpinning(true)
     setChoosing(null)
+    const kind = run.rollKind
+    const heldYear = run.year
+    const heldOwner = run.team?.owner
+    const ownerYears =
+      kind === 'year'
+        ? index.years.filter((y) =>
+            index.seasonsByYear.get(y)!.teams.some((t) => t.owner === heldOwner),
+          )
+        : []
     let tick = 0
     const iv = setInterval(() => {
       tick++
-      const year = index.years[Math.floor(Math.random() * index.years.length)]
-      const season = index.seasonsByYear.get(year)!
-      const team = season.teams[Math.floor(Math.random() * season.teams.length)]
-      setFlash({ year, name: team.team_name, owner: team.owner })
+      if (kind === 'team') {
+        const season = index.seasonsByYear.get(heldYear)!
+        const team = season.teams[Math.floor(Math.random() * season.teams.length)]
+        setFlash({ year: heldYear, name: team.team_name, owner: team.owner })
+      } else if (kind === 'year' && ownerYears.length > 0) {
+        const year = ownerYears[Math.floor(Math.random() * ownerYears.length)]
+        const team = index.seasonsByYear.get(year)!.teams.find((t) => t.owner === heldOwner)!
+        setFlash({ year, name: team.team_name, owner: heldOwner! })
+      } else {
+        const year = index.years[Math.floor(Math.random() * index.years.length)]
+        const season = index.seasonsByYear.get(year)!
+        const team = season.teams[Math.floor(Math.random() * season.teams.length)]
+        setFlash({ year, name: team.team_name, owner: team.owner })
+      }
       if (tick >= SPIN_TICKS) {
         clearInterval(iv)
         setSpinning(false)
@@ -117,6 +137,9 @@ export default function PlayScreen({ index, run, mode, onDrafted, onQuit }: Prop
             {shown.name}
           </div>
           <div className="text-xs text-slate-400">{shown.owner}</div>
+        </div>
+        <div className="mt-1.5 text-[10px] text-slate-600">
+          🎲 Year = same owner, new season · 🎲 Team = same season, new team
         </div>
       </div>
 
