@@ -67,8 +67,14 @@ for (let year = startYear; year <= endYear; year++) {
     console.log(`skipped (${e.message})`)
     continue
   }
+  // first names only (privacy for a public repo); last initial on collision
+  const firsts = (league.members ?? []).map((m) => (m.firstName ?? m.displayName ?? '').trim().split(/\s+/)[0])
   const memberById = new Map(
-    (league.members ?? []).map((m) => [m.id, `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim() || m.displayName]),
+    (league.members ?? []).map((m, i) => {
+      const first = firsts[i] || 'Unknown'
+      const dupe = firsts.filter((f) => f === first).length > 1
+      return [m.id, dupe && m.lastName ? `${first} ${m.lastName[0]}.` : first]
+    }),
   )
   const playersByTeam = new Map() // team_id -> Map(player_id -> player entry)
   for (const t of league.teams ?? []) playersByTeam.set(t.id, new Map())
@@ -117,5 +123,5 @@ for (let year = startYear; year <= endYear; year++) {
   console.log(`${teams.length} teams, ${teams.reduce((n, t) => n + t.roster.length, 0)} players`)
 }
 
-writeFileSync(OUT, JSON.stringify({ weekly_line: 145, seasons }))
-console.log(`Wrote ${OUT}`)
+writeFileSync(OUT, JSON.stringify({ weekly_line: 129, seasons }))
+console.log(`Wrote ${OUT} — re-run scripts/tune-line.mjs 0.02 --write to recalibrate the line`)

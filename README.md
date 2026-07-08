@@ -3,7 +3,13 @@
 A mobile-first web game modeled on Sleeper's 17-0, but the player pool comes from my ESPN
 fantasy league's history (league 390467). Roll a random team-season, draft a player from
 its real roster, fill all 7 lineup slots (QB, 2 RB, 2 WR, TE, FLEX), then watch the lineup
-replay its seasons week by week. Score **145+ PPR** every week to go **17-0**.
+replay its seasons week by week. Clear the weekly line every week to go **17-0**.
+
+The line is calibrated by `scripts/tune-line.mjs` so that a strong player (25 rolls per
+pick, always drafting the best available season) goes 17-0 about 2% of the time —
+currently **129**. The same script prints the best feasible lineup; its worst week is the
+hard ceiling above which 17-0 is impossible (145.4 with the current data). Owner names in
+the data are stripped to first names by `scripts/anonymize-owners.mjs`.
 
 Personal project. Static SPA — no backend, no AWS, no credentials in the repo.
 
