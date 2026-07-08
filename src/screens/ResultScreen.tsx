@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRecord } from '../hooks/useRecord'
 import { saveBestRecordIfBetter } from '../storage'
-import { SLOT_DEFS, type DraftedPlayer, type Mode } from '../types'
+import { SLOT_DEFS, WEEKS, type DraftedPlayer, type Mode } from '../types'
 
 interface Props {
   lineup: DraftedPlayer[]
@@ -131,13 +131,14 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-slate-100">{d.player.name}</div>
-                <div className="truncate text-xs text-slate-500">
-                  {d.year} · {d.teamName}
+                <div className="truncate text-xs text-slate-500">{d.teamName}</div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className="text-sm font-bold text-turf">{d.player.total_ppr.toFixed(1)}</div>
+                <div className="text-xs text-slate-500">
+                  {(d.player.total_ppr / WEEKS).toFixed(1)} /wk
                 </div>
               </div>
-              <span className="shrink-0 text-sm font-bold text-turf">
-                {d.player.total_ppr.toFixed(1)}
-              </span>
             </div>
           ))}
         </div>

@@ -79,7 +79,9 @@ for (let year = startYear; year <= endYear; year++) {
   const playersByTeam = new Map() // team_id -> Map(player_id -> player entry)
   for (const t of league.teams ?? []) playersByTeam.set(t.id, new Map())
 
-  // Union of rosters across every week, so mid-season pickups/drops all count.
+  // Weekly snapshots are needed to collect per-week stats; the draft pool is
+  // then restricted to the END-OF-SEASON roster (final-week membership).
+  const finalIds = new Map() // team_id -> Set(player_id) at the last week seen
   for (let week = 1; week <= WEEKS; week++) {
     let snap
     try {
@@ -90,6 +92,7 @@ for (let year = startYear; year <= endYear; year++) {
     for (const t of snap.teams ?? []) {
       const bucket = playersByTeam.get(t.id)
       if (!bucket) continue
+      finalIds.set(t.id, new Set((t.roster?.entries ?? []).map((e) => e.playerPoolEntry?.player?.id)))
       for (const entry of t.roster?.entries ?? []) {
         const p = entry.playerPoolEntry?.player
         if (!p || !SKILL[p.defaultPositionId]) continue
@@ -114,10 +117,12 @@ for (let year = startYear; year <= endYear; year++) {
     team_id: t.id,
     team_name: t.name ?? `${t.location ?? ''} ${t.nickname ?? ''}`.trim(),
     owner: memberById.get(t.owners?.[0]) ?? 'Unknown',
-    roster: [...playersByTeam.get(t.id).values()].map((p) => ({
-      ...p,
-      total_ppr: Math.round(p.weekly_ppr.reduce((a, b) => a + b, 0) * 10) / 10,
-    })),
+    roster: [...playersByTeam.get(t.id).values()]
+      .filter((p) => finalIds.get(t.id)?.has(p.player_id))
+      .map((p) => ({
+        ...p,
+        total_ppr: Math.round(p.weekly_ppr.reduce((a, b) => a + b, 0) * 10) / 10,
+      })),
   }))
   seasons[String(year)] = { year, teams }
   console.log(`${teams.length} teams, ${teams.reduce((n, t) => n + t.roster.length, 0)} players`)
