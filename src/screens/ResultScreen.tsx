@@ -44,6 +44,7 @@ function Confetti() {
 
 export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, onHome }: Props) {
   const record = useRecord(lineup, weeklyLine)
+  const teamAvg = lineup.reduce((s, d) => s + d.player.total_ppr, 0) / WEEKS
   const [isNewBest, setIsNewBest] = useState(false)
 
   useEffect(() => {
@@ -93,26 +94,16 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
         )}
       </div>
 
-      <div className="mt-8">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-          Week by week · line {weeklyLine}
-        </h3>
-        <div className="grid grid-cols-1 gap-1">
-          {record.weeks.map((w) => (
-            <div
-              key={w.week}
-              className={`flex items-center rounded-lg px-3 py-1.5 text-sm ${
-                w.win ? 'bg-turf-deep/20' : 'bg-rose-500/10'
-              }`}
-            >
-              <span className="w-12 font-bold text-slate-400">Wk {w.week}</span>
-              <span className="flex-1 font-semibold text-slate-200">{w.score.toFixed(1)}</span>
-              <span className="mr-3 text-xs text-slate-500">vs {weeklyLine}</span>
-              <span className={`w-6 text-right font-black ${w.win ? 'text-turf' : 'text-rose-400'}`}>
-                {w.win ? 'W' : 'L'}
-              </span>
-            </div>
-          ))}
+      <div className="mx-auto mt-6 w-fit rounded-2xl bg-field-soft px-6 py-3 text-center ring-1 ring-slate-700">
+        <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          Team average
+        </div>
+        <div className="mt-0.5 text-3xl font-black text-slate-100">
+          {teamAvg.toFixed(1)}
+          <span className="ml-1 text-base font-bold text-slate-500">/wk</span>
+        </div>
+        <div className={`mt-0.5 text-xs font-semibold ${teamAvg >= weeklyLine ? 'text-turf' : 'text-rose-400'}`}>
+          line {weeklyLine}
         </div>
       </div>
 
@@ -133,12 +124,10 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
                 <div className="truncate text-sm font-semibold text-slate-100">{d.player.name}</div>
                 <div className="truncate text-xs text-slate-500">{d.teamName}</div>
               </div>
-              <div className="shrink-0 text-right">
-                <div className="text-sm font-bold text-turf">{d.player.total_ppr.toFixed(1)}</div>
-                <div className="text-xs text-slate-500">
-                  {(d.player.total_ppr / WEEKS).toFixed(1)} /wk
-                </div>
-              </div>
+              <span className="shrink-0 text-sm font-bold text-turf">
+                {(d.player.total_ppr / WEEKS).toFixed(1)}
+                <span className="ml-1 font-normal text-slate-500">/wk</span>
+              </span>
             </div>
           ))}
         </div>
