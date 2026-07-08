@@ -32,9 +32,12 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, onStart
 
         {best && (
           <div className="mx-auto mt-6 w-fit rounded-full bg-field-soft px-5 py-2 ring-1 ring-turf/40">
-            <span className="text-xs uppercase tracking-wide text-slate-400">Best average </span>
-            <span className="ml-1 font-black text-turf">{best.avg.toFixed(1)} /wk</span>
-            {best.perfect && <span className="ml-1.5 text-xs">🏆 17-0</span>}
+            <span className="text-xs uppercase tracking-wide text-slate-400">Best </span>
+            <span className="ml-1 font-black text-turf">
+              {best.wins}-{best.losses}
+            </span>
+            <span className="ml-1.5 text-xs text-slate-400">{best.avg.toFixed(1)} /wk</span>
+            {best.perfect && <span className="ml-1.5 text-xs">🏆</span>}
             {best.mode === 'hard' && <span className="ml-1.5 text-xs text-flag">HARD</span>}
           </div>
         )}
@@ -84,8 +87,8 @@ export default function HomeScreen({ mode, onModeChange, best, isSample, onStart
               <li>Draft one player from that team's real end-of-season roster into an open slot.</li>
               <li>Fill all 7 slots: QB, 2 RB, 2 WR, TE, FLEX. No drafting the same player twice.</li>
               <li>
-                Your team's combined average points per week decides it — clear the hidden bar
-                and you go 17-0.
+                Your team's combined average points per week decides your record — clear the
+                hidden bar for 17-0; the further you miss, the worse your season.
               </li>
               <li>
                 Go <span className="font-bold text-turf">17-0</span> to achieve perfection.

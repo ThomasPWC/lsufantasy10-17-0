@@ -51,12 +51,14 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
     setIsNewBest(
       saveBestResultIfBetter({
         avg: Math.round(record.avg * 10) / 10,
+        wins: record.wins,
+        losses: record.losses,
         perfect: record.perfect,
         mode,
         date: new Date().toISOString(),
       }),
     )
-  }, [record.avg, record.perfect, mode])
+  }, [record, mode])
 
   return (
     <div className="flex min-h-dvh flex-col px-5 pb-8 pt-10">
@@ -77,11 +79,13 @@ export default function ResultScreen({ lineup, mode, weeklyLine, onPlayAgain, on
           <div className="mt-2 text-xl font-black text-turf">🏆 PERFECT SEASON 🏆</div>
         ) : (
           <div className="mt-2 text-sm text-slate-400">
-            {weeklyLine - record.avg <= 5
+            {record.wins >= 15
               ? 'Agonizingly close.'
-              : weeklyLine - record.avg <= 15
-                ? 'Solid squad. Not a legend.'
-                : 'Rough draft, coach.'}
+              : record.wins >= 11
+                ? 'Playoff team. Not a legend.'
+                : record.wins >= 6
+                  ? 'Mediocre. The group chat remembers.'
+                  : 'Rough draft, coach.'}
           </div>
         )}
         {isNewBest && !record.perfect && (

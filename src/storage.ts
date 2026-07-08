@@ -2,6 +2,8 @@ import type { Mode } from './types'
 
 export interface BestResult {
   avg: number
+  wins: number
+  losses: number
   perfect: boolean
   mode: Mode
   date: string
